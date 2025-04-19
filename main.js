@@ -60,13 +60,14 @@ app.post('/account/login', (req, res)=>{
         if(err) {
             res.send(err)
         } else {
-            if(result==null) {
+            if(result.rows[0]==undefined) {
                 res.send("Incorrect Password")
+            } else {
+                /** if it match, then set the userid in local storage*/
+                const user_id = await result.rows[0];
+                res.send(user_id.id);
             }
-            /** if it match, then set the userid in local storage*/
-            const user_id = await result.rows[0];
-            console.log(user_id);
-            res.send(user_id.id);
+            
         }
 
         
@@ -93,10 +94,10 @@ app.get('/account/color_history/:id', async (req, res)=>{
 app.post('/account/:id/hex', (req, res)=>{
 
     const user_id = req.params.id;
-    const {hex_code} = req.body;
+    const {hex} = req.body;
 
     const set_color = 'INSERT INTO color ("hex", user_id) VALUES ($1, $2)'
-    con.query(set_color,[hex_code, user_id], (err, result)=>{
+    con.query(set_color,[hex, user_id], (err, result)=>{
         if(err) {
             res.send(err)
         } else {
