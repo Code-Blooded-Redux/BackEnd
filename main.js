@@ -2,9 +2,20 @@ require('dotenv').config()
 const {Client} = require('pg')
 
 const express =require('express')
+const cors = require('cors');
 const app=express()
 
 app.use(express.json())
+
+// CORS options to allow requests from frontend running on port 5500
+const corsOptions = {
+    origin: '*', // Allow only requests from this origin
+    methods: 'GET,POST', // Allow only these methods
+    allowedHeaders: ['Content-Type', 'Authorization'] // Allow only these headers
+};
+
+// Use CORS middleware with specified options
+app.use(cors(corsOptions));
 
 console.log(process.env.host)
 
