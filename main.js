@@ -1,3 +1,4 @@
+require('dotenv').config()
 const {Client} = require('pg')
 
 const express =require('express')
@@ -5,16 +6,19 @@ const app=express()
 
 app.use(express.json())
 
+console.log(process.env.host)
+
 const con= new Client ({
     /**Change to render later */
-    host: "localhost",
-    user: "postgres",
-    port: 5432,
-    password: "password",
-    database: "postgres"
+    host: process.env.host,
+    user: process.env.user,
+    port: process.env.port,
+    password: process.env.password,
+    database: process.env.database,
+    ssl: true
 })
 
-app.listen(3000, () => {
+app.listen(process.env.port, () => {
     console.log("server is running...")
 })
 
