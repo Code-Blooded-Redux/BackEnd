@@ -14,61 +14,94 @@ const con= new Client ({
     database: "postgres"
 })
 
+app.listen(3000, () => {
+    console.log("server is running...")
+})
+
 con.connect().then(()=> console.log("connected"))
 
 /**Create the account */
-app.post('/user', (req, res)=> {
-    const {username,password}=req.body
+app.post('/account/signup', (req, res)=>{
+    const {username,password} = req.body
+
+    if(password == null) {
+        res.send("Password Required")
+    }
 
     const insert_query = 'INSERT INTO "user" (username, password) VALUES ($1, $2)'
-
-    con.query(insert_query, [username,password], (err, result)=> {
+    con.query(insert_query, [username, password], (err, result)=> {
         if(err) {
-            console.log("FAILED")
             res.send(err)
         } else {
-            console.log(result)
-            res.send("POSTED DATA")
+            res.send("SIGN UP SUCCESS")
+        }
+    })
+}) 
+
+/**User Login */
+app.post('/account/login', (req, res)=>{
+    const {username,password} = req.body
+
+    /**check if username exist */
+    const user_query = 'SELECT username FROM "user" WHERE "user".username=$1'
+    con.query(user_query,[username], (err, result)=>{
+        if(err) {
+            res.send(err)
+        } else {
+            if(result==null) {
+                res.send("Cannot find user")
+            }
+        }
+    })
+    
+    /**check if password and username match */
+    const pass_query = 'SELECT * FROM "user" WHERE "user".username=$1 AND "user".password=$2'
+    con.query(pass_query,[username, password], async (err, result)=>{
+        if(err) {
+            res.send(err)
+        } else {
+            if(result==null) {
+                res.send("Incorrect Password")
+            }
+            /** if it match, then set the userid in local storage*/
+            const user_id = await result.rows[0];
+            console.log(user_id);
+            res.send(user_id.id);
+        }
+
+        
+    })
+
+}) 
+
+/**Get User History */
+app.get('/account/color_history/:id', async (req, res)=>{
+
+    const user_id = req.params.id;
+
+    const get_colors = 'SELECT "hex" FROM color WHERE user_id=$1'
+    con.query(get_colors,[user_id], (err, result)=>{
+        if(err) {
+            res.send(err)
+        } else {
+            res.send(result.rows);
         }
     })
 })
 
-/**Log user in */
-    app.post('/user/login', async (req, res)=> {
-        const {username,password}=req.body
-    
-        if(username == null) {
-            return res.status(400).send('Cannot find user')
-        }
-        try {
-            await fetchPass(username, password);
-            res.send("Entered")
-        } catch {
-            res.send("Failed")
-        }
-    })
+/**Post User History */
+app.post('/account/:id/hex', (req, res)=>{
 
-async function fetchPass(username, password) {
-    var response = ''; 
-    const fetch_query='SELECT * FROM "user" WHERE username=$1'
-    con.query(fetch_query, [username],(err, result)=> {
+    const user_id = req.params.id;
+    const {hex_code} = req.body;
+
+    const set_color = 'INSERT INTO color ("hex", user_id) VALUES ($1, $2)'
+    con.query(set_color,[hex_code, user_id], (err, result)=>{
         if(err) {
-            console.log("FETCH PASS FAIL")
+            res.send(err)
         } else {
-            response = result.rows[0].password
-            console.log('password retrieved')
-            console.log(response)
-            if(password == response) {
-                console.log("Password correct")
-                return true;
-            } else {
-                console.log("Password Incorrect")
-                return false;
-            }
+            res.send("Successfully set color");
         }
     })
-}
-
-app.listen(3000, () => {
-    console.log("server is running...")
+    
 })
